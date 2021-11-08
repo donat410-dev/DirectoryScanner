@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 
 namespace DirectoryScanner
 {
-    public class BuildHtml
+    public static class BuildHtml
     {
         private static readonly ConcurrentDictionary<string, (int count, long size)> Dictionary = new();
         private static readonly ConcurrentBag<Task> Tasks = new();
         private static int _totalCount;
         private static string _html = "";
 
-        private static void CheckMimeTypes(FilesystemElement element)
+        private static void CheckMimeTypes(FileSystemElement element)
         {
             foreach (var item in element.GetChildrenElements())
             {
@@ -47,7 +47,7 @@ namespace DirectoryScanner
             }
             return $"{size} б";
         }
-        public static void Start(FilesystemElement element, bool includeMoreData = false)
+        public static void Start(FileSystemElement element, bool includeMoreData = false)
         {
             _html += "<style> " +
                      "html{font-size:1.5em;font-family:sans-serif;}" +
@@ -81,7 +81,7 @@ namespace DirectoryScanner
             File.AppendAllText("index.html", _html);
         }
 
-        private static void FileManager(FilesystemElement element)
+        private static void FileManager(FileSystemElement element)
         {
             _html += $"|- {element.Name} <b>-dir</b> <i>({FormatFileSize(element.Size)})</i> <ul style='margin:0;padding-left:20px'>";
             foreach (var item in element.GetChildrenElements())
@@ -92,7 +92,7 @@ namespace DirectoryScanner
                 }
                 else
                 {
-                    _html += $"<li>{item.Name} <b>-f</b></li>";
+                    _html += $"<li>{item.Name} <b>-file</b> ({FormatFileSize(item.Size)})</li>";
                 }
             }
             _html += "</ul>";

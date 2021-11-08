@@ -10,7 +10,7 @@ namespace DirectoryScanner
         {
             Console.WriteLine("Начато сканирование директории");
             var stopwatch = Stopwatch.StartNew();
-            var tree = FilesystemElement.GenTree(Directory.GetCurrentDirectory());
+            var tree = FileSystemElement.GenTree(Directory.GetCurrentDirectory());
             stopwatch.Stop();
             Console.WriteLine($"Cканирование директории завершено, затрачено {stopwatch.ElapsedMilliseconds / 1000.0} sec");
 
@@ -19,6 +19,7 @@ namespace DirectoryScanner
             BuildHtml.Start(tree, true);
             stopwatch.Stop();
             Console.WriteLine($"Построение html документа завершено, затрачено {stopwatch.ElapsedMilliseconds / 1000.0}sec");
+            Console.ReadKey();
         }
     }
 }
