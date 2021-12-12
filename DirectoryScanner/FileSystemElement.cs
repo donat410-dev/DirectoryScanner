@@ -2,23 +2,17 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DirectoryScanner
 {
     public class FileSystemElement
     {
-        public string Name { get; private set; }
-        public string MimeType { get; private set; }
+        public string Name { get; private init; }
+        public string MimeType { get; private init; }
         public long Size { get; private set; }
-        private ConcurrentBag<FileSystemElement> _childrenElements = new();
-        private FileSystemElement ParentElement { get; set; }
-
-        public ConcurrentBag<FileSystemElement> GetChildrenElements()
-        {
-            return _childrenElements;
-        }
+        public ConcurrentBag<FileSystemElement> ChildrenElements { get; private init; } = new();
+        private FileSystemElement ParentElement { get; init; }
 
         private void AddFiles(string dir)
         {
@@ -31,19 +25,24 @@ namespace DirectoryScanner
 
                     var fElement = new FileSystemElement
                     {
-                        _childrenElements = null,
+                        ChildrenElements = null,
                         Size = tempFileInfo.Length,
                         Name = tempFileInfo.Name,
-                        MimeType = mimeType,
+                        MimeType = mimeType ?? "undefined",
                         ParentElement = this
                     };
 
-                    this._childrenElements.Add(fElement);
+                    ChildrenElements.Add(fElement);
                 });
             }
             catch (Exception e)
             {
                 // ignored
+            }
+            finally
+            {
+                Size += ChildrenElements
+                    .Select(fElement => fElement.Size).Sum();
             }
         }
 
@@ -51,7 +50,7 @@ namespace DirectoryScanner
         {
             try
             {
-                Parallel.ForEach(Directory.GetDirectories(dir), new ParallelOptions {MaxDegreeOfParallelism = 10}, d =>
+                Parallel.ForEach(Directory.GetDirectories(dir), d =>
                 {
                     var tempDirInfo = new DirectoryInfo(d);
                     var dElement = new FileSystemElement
@@ -59,12 +58,12 @@ namespace DirectoryScanner
                         MimeType = "folder/folder",
                         ParentElement = this,
                         Name = tempDirInfo.Name,
-                        Size = GetDirSize(d),
                     };
-                    dElement.AddFiles(d);
+                    ChildrenElements.Add(dElement);
+
                     dElement.AddDirs(d);
 
-                    this._childrenElements.Add(dElement);
+                    dElement.AddFiles(d);
                 });
             }
             catch (Exception e)
@@ -78,37 +77,12 @@ namespace DirectoryScanner
             var firstDir = new FileSystemElement
             {
                 Name = dir.Split('\\').Last(),
-                Size = GetDirSize(dir),
                 MimeType = "folder/folder"
             };
-
-            firstDir.AddFiles(dir);
             firstDir.AddDirs(dir);
+            firstDir.AddFiles(dir);
+
             return firstDir;
-        }
-
-        private static long GetDirSize(string path)
-        {
-            long size = 0;
-            try
-            {
-                var files = Directory.GetFiles(path);
-
-                Parallel.ForEach(files, file =>
-                    Interlocked.Add(ref size, new FileInfo(file).Length));
-
-                var dirs = Directory.GetDirectories(path);
-
-                Parallel.ForEach(dirs, dir =>
-                    Interlocked.Add(ref size, GetDirSize(dir)));
-                return size;
-            }
-            catch (Exception e)
-            {
-                // ignored
-            }
-
-            return size;
         }
     }
 }

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace DirectoryScanner
 {
-    internal class Program
+    internal static class Program
     {
         private static void Main(string[] args)
         {

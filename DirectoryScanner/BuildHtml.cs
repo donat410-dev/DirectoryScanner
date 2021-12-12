@@ -14,14 +14,14 @@ namespace DirectoryScanner
 
         private static void CheckMimeTypes(FileSystemElement element)
         {
-            foreach (var item in element.GetChildrenElements())
+            foreach (var item in element.ChildrenElements)
             {
                 if (item.MimeType == "folder/folder")
                 {
                     Tasks.Add(Task.Run(() => CheckMimeTypes(item)));
                     continue;
                 }
-                Dictionary.AddOrUpdate(item.MimeType ?? "undefined", (1, item.Size),
+                Dictionary.AddOrUpdate(item.MimeType, (1, item.Size),
                     (_, tuple) => (tuple.count += 1, tuple.size += item.Size));
                 Interlocked.Increment(ref _totalCount);
             }
@@ -84,7 +84,7 @@ namespace DirectoryScanner
         private static void FileManager(FileSystemElement element)
         {
             _html += $"|- {element.Name} <b>-dir</b> <i>({FormatFileSize(element.Size)})</i> <ul style='margin:0;padding-left:20px'>";
-            foreach (var item in element.GetChildrenElements())
+            foreach (var item in element.ChildrenElements)
             {
                 if (item.MimeType == "folder/folder")
                 {
