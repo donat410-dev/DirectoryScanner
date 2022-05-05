@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DirectoryScanner
@@ -11,8 +12,10 @@ namespace DirectoryScanner
         public string Name { get; private init; }
         public string MimeType { get; private init; }
         public long Size { get; private set; }
-        public ConcurrentBag<FileSystemElement> ChildrenElements { get; private init; } = new();
+        public ConcurrentQueue<FileSystemElement> ChildrenElements { get; private init; } = new();
         private FileSystemElement ParentElement { get; init; }
+        
+        internal static int TotalCountElements;
 
         private void AddFiles(string dir)
         {
@@ -32,7 +35,7 @@ namespace DirectoryScanner
                         ParentElement = this
                     };
 
-                    ChildrenElements.Add(fElement);
+                    ChildrenElements.Enqueue(fElement);
                 });
             }
             catch (Exception e)
@@ -41,6 +44,8 @@ namespace DirectoryScanner
             }
             finally
             {
+                Interlocked.Add(ref TotalCountElements, ChildrenElements.Count);
+
                 Size += ChildrenElements
                     .Select(fElement => fElement.Size).Sum();
             }
@@ -59,7 +64,7 @@ namespace DirectoryScanner
                         ParentElement = this,
                         Name = tempDirInfo.Name,
                     };
-                    ChildrenElements.Add(dElement);
+                    ChildrenElements.Enqueue(dElement);
 
                     dElement.AddDirs(d);
 
@@ -69,6 +74,10 @@ namespace DirectoryScanner
             catch (Exception e)
             {
                 // ignored
+            }
+            finally
+            {
+                Interlocked.Add(ref TotalCountElements, ChildrenElements.Count);
             }
         }
 
