@@ -14,7 +14,6 @@ namespace DirectoryScanner
         public long Size { get; private set; }
         public ConcurrentQueue<FileSystemElement> ChildrenElements { get; private init; } = new();
         private FileSystemElement ParentElement { get; init; }
-        
         internal static int TotalCountElements;
 
         private void AddFiles(string dir)
@@ -45,7 +44,6 @@ namespace DirectoryScanner
             finally
             {
                 Interlocked.Add(ref TotalCountElements, ChildrenElements.Count);
-
                 Size += ChildrenElements
                     .Select(fElement => fElement.Size).Sum();
             }
@@ -65,19 +63,13 @@ namespace DirectoryScanner
                         Name = tempDirInfo.Name,
                     };
                     ChildrenElements.Enqueue(dElement);
-
                     dElement.AddDirs(d);
-
                     dElement.AddFiles(d);
                 });
             }
             catch (Exception e)
             {
                 // ignored
-            }
-            finally
-            {
-                Interlocked.Add(ref TotalCountElements, ChildrenElements.Count);
             }
         }
 
